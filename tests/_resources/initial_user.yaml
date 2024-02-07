@@ -1,0 +1,4 @@
+---
+instance:
+  initial_user_name: root
+  initial_user_password: a very long password

@@ -1,11 +1,6 @@
-from AccessControl.SecurityManagement import newSecurityManager
 from plone.base.interfaces import IPloneSiteRoot
-from plonectl.app import get_app_from_ctx
-from Products.CMFPlone.factory import _DEFAULT_PROFILE
-from Products.CMFPlone.factory import addPloneSite
+from plonectl import utils
 from Products.CMFPlone.Portal import PloneSite
-from rich.console import Console
-from rich.table import Table
 from typing import List
 from typing import Optional
 from typing_extensions import Annotated
@@ -42,6 +37,7 @@ typer_app = typer.Typer()
 def create(
     ctx: typer.Context,
     site_id: str,
+    title: str = "Plone",
     distribution: Annotated[
         str, typer.Option(callback=_distribution_callback)
     ] = "volto",
@@ -52,44 +48,26 @@ def create(
     delete_existing: bool = False,
 ):
     """Create a new Plone Site in this installation."""
-    import transaction
-
     additional_profiles = profile if profile else []
     profiles = PROFILES[distribution]
     profiles.extend(
         [profile.strip() for profile in additional_profiles if profile.strip()]
     )
-    typer.echo(f"Creating site {site_id} - {distribution}")
-    app = get_app_from_ctx(ctx)
-    admin = app.acl_users.getUserById("admin")
-    admin = admin.__of__(app.acl_users)
-    newSecurityManager(None, admin)
-    payload = {
-        "title": "Plone",
-        "profile_id": _DEFAULT_PROFILE,
-        "extension_ids": profiles,
-        "setup_content": example_content,
-        "default_language": language,
-        "portal_timezone": timezone,
-    }
+    settings = ctx.obj.settings
+    user = settings.instance.initial_user_name
+    app = utils.get_app_from_ctx(ctx)
     exists = site_id in app.objectIds()
     if exists:
         if not delete_existing:
             raise typer.BadParameter(f"The id {site_id} is already being used")
-        with transaction.manager as tm:
-            app.manage_delObjects([site_id])
-            msg = f"Removed site {site_id}"
-            typer.echo(msg)
-            tm.setUser("admin", "/acl_users")
-            tm.note(msg)
-        app._p_jar.sync()
-    with transaction.manager as tm:
-        site = addPloneSite(app, site_id, **payload)
-        msg = f"Added site {site.id}"
-        typer.echo(msg)
-        tm.setUser("admin", "/acl_users")
-        tm.note(msg)
-    app._p_jar.sync()
+        utils.delete_site(app, site_id=site_id, user=user)
+        typer.echo("Deleted existing site")
+    typer.echo(f"Creating site {site_id} ({distribution})")
+    site = utils.create_site(
+        app, site_id, title, language, timezone, example_content, profiles, user
+    )
+    path = "/".join(site.getPhysicalPath())
+    typer.echo(f"Created site {site_id} at {path}")
 
 
 def _get_sites(context) -> List[PloneSite]:
@@ -106,18 +84,19 @@ def _get_sites(context) -> List[PloneSite]:
     return results
 
 
-@typer_app.command()
-def list(ctx: typer.Context):
+@typer_app.command(name="list")
+def list_sites(ctx: typer.Context):
     """List Plone sites."""
-    app = get_app_from_ctx(ctx)
-    admin = app.acl_users.getUserById("admin")
-    admin = admin.__of__(app.acl_users)
-    newSecurityManager(None, admin)
-    console = Console()
-    table = Table("#", "Path", "Title")
-    results = _get_sites(app)
-    for idx, site in enumerate(results):
-        path = "/".join(site.getPhysicalPath())
-        title = site.title
-        table.add_row(f"{idx + 1:02d}", path, title)
-    console.print(table)
+    columns = [
+        ("#", "right"),
+        ("Path", "left"),
+        ("Title", "left"),
+        ("Database Version", "right"),
+        ("Filesystem Version", "right"),
+    ]
+    app = utils.get_app_from_ctx(ctx)
+    sites = utils.list_sites(app)
+    rows = []
+    for idx, site in enumerate(sites):
+        rows.append((idx, site.path, site.title, site.version, site.fs_version))
+    utils.display_table("Plone Sites", columns, rows)

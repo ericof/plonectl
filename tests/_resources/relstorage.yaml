@@ -1,0 +1,8 @@
+---
+instance:
+  target: instance
+  db_storage: relstorage
+  db_relstorage: sqlite3
+  db_relstorage_sqlite3_driver: sqlite3
+  db_relstorage_sqlite3_data_dir: "{{ target }}/var/filestorage"
+  db_relstorage_keep_history: true

@@ -51,13 +51,8 @@ bin/pip bin/tox bin/mxdev:
 	bin/pip install -U "pip" "wheel" "cookiecutter" "mxdev" "tox" "pre-commit"
 	if [ -d $(GIT_FOLDER) ]; then bin/pre-commit install; else echo "$(RED) Not installing pre-commit$(RESET)";fi
 
-.PHONY: config
-config: bin/pip  ## Create instance configuration
-	@echo "$(GREEN)==> Create instance configuration$(RESET)"
-	bin/cookiecutter -f --no-input --config-file instance.yaml gh:plone/cookiecutter-zope-instance
-
 .PHONY: build-dev
-build-dev: config ## pip install Plone packages
+build-dev: bin/pip ## pip install Plone packages
 	@echo "$(GREEN)==> Setup Build$(RESET)"
 	bin/mxdev -c mx.ini
 	bin/pip install -r requirements-mxdev.txt
@@ -69,7 +64,6 @@ install: build-dev ## Install Plone 6.0
 .PHONY: build
 build: build-dev ## Install Plone 6.0
 
-
 .PHONY: clean
 clean: ## Remove old virtualenv and creates a new one
 	@echo "$(RED)==> Cleaning environment and build$(RESET)"
@@ -77,11 +71,11 @@ clean: ## Remove old virtualenv and creates a new one
 
 .PHONY: start
 start: ## Start a Plone instance on localhost:8080
-	PYTHONWARNINGS=ignore ./bin/runwsgi instance/etc/zope.ini
+	./bin/plonectl server start
 
 .PHONY: console
 console: ## Start a zope console
-	PYTHONWARNINGS=ignore ./bin/zconsole debug instance/etc/zope.conf
+	./bin/plonectl server shell
 
 .PHONY: format
 format: bin/tox ## Format the codebase according to our standards
@@ -91,16 +85,6 @@ format: bin/tox ## Format the codebase according to our standards
 .PHONY: lint
 lint: ## check code style
 	bin/tox -e lint
-
-# i18n
-bin/i18ndude: bin/pip
-	@echo "$(GREEN)==> Install translation tools$(RESET)"
-	bin/pip install i18ndude
-
-.PHONY: i18n
-i18n: bin/i18ndude ## Update locales
-	@echo "$(GREEN)==> Updating locales$(RESET)"
-	bin/update_dist_locale
 
 # Tests
 .PHONY: test

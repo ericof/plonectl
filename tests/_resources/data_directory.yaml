@@ -1,0 +1,5 @@
+---
+instance:
+  target: instance
+  db_filestorage_location: /data/filestorage/Data.fs
+  db_blobs_location: /data/blobstorage

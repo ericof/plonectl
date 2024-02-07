@@ -7,6 +7,7 @@ include .dockerignore
 include .editorconfig
 include *.txt
 include *.yml
+include *.yaml
 include *.md
 exclude *-mxdev.txt
 exclude Dockerfile

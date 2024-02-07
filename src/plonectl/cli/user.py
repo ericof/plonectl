@@ -1,4 +1,4 @@
-from plonectl.app import get_app_from_ctx
+from plonectl.utils import get_app_from_ctx
 from typing_extensions import Annotated
 
 import typer

@@ -1,4 +1,4 @@
-default_context:
+instance:
     initial_user_name: 'admin'
     initial_user_password: 'admin'
 

@@ -10,6 +10,36 @@ long_description = f"""
 {Path("CHANGES.md").read_text()}\n
 """
 
+_base_requirements = [
+    "setuptools",
+    "Plone",
+    "plone.api",
+    "Jinja2",
+    "dynaconf",
+    "typer[all]",
+]
+
+_bpython_support = [
+    "bpython",
+]
+_ipython_support = [
+    "prompt-toolkit>=3.0.28",
+    "IPython",
+]
+
+_recommended = _bpython_support
+
+_all = _bpython_support + _ipython_support
+
+_test = [
+    "relstorage",
+    "zest.releaser[recommended]",
+    "zestreleaser.towncrier",
+    "plone.app.testing",
+    "pytest",
+    "pytest-cov",
+    "pytest-plone>=0.2.0",
+]
 
 setup(
     name="plonectl",
@@ -47,27 +77,16 @@ setup(
     include_package_data=True,
     zip_safe=False,
     python_requires=">=3.8",
-    install_requires=[
-        "setuptools",
-        "Plone",
-        "plone.api",
-        "prompt-toolkit>=3.0.28",
-        "IPython",
-        "typer[all]",
-    ],
+    install_requires=_base_requirements,
     extras_require={
-        "test": [
-            "zest.releaser[recommended]",
-            "zestreleaser.towncrier",
-            "plone.app.testing",
-            "pytest",
-            "pytest-cov",
-            "pytest-plone>=0.2.0",
-        ],
+        "bpython": _bpython_support,
+        "ipython": _ipython_support,
+        "recommended": _recommended,
+        "all": _all,
+        "test": _test,
     },
     entry_points="""
     [console_scripts]
     plonectl = plonectl.cli:cli
-    update_dist_locale = plonectl.locales.update:update_locale
     """,
 )

@@ -1,3 +1,3 @@
 # Contributors
 
-- plone [ericof@plone.org]
+- Érico Andrei [ericof@plone.org]
